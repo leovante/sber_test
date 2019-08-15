@@ -11,7 +11,7 @@ import java.io.StringReader;
 import java.util.Scanner;
 
 public class Parse {
-    String fileName = "C:\\Users\\Dmitry\\Desktop\\orders.xml";
+    String fileName = "C:\\Users\\Dmitry\\Desktop\\orders2.xml";
     AddOrder addOrder;
     DeleteOrder deleteOrder;
     ParseToBooks parseToBooks = new ParseToBooks();

@@ -7,69 +7,68 @@ import java.util.*;
 
 public class OrderBook {
     /*коллекции покупки и продажи в стакане*/
-    private Map<BigDecimal, List<AddOrder>> bidMap;
-    private Map<BigDecimal, List<AddOrder>> offerMap;
-    private Queue<BigDecimal> bidMaxPriceList = null;
-    private Queue<BigDecimal> offerMinPriceList = null;
+    private Map<Double, List<AddOrder>> bidMap;
+    private Map<Double, List<AddOrder>> offerMap;
+    private Queue<Double> bidMaxPriceList = null;
+    private Queue<Double> offerMinPriceList = null;
 
     /*Инициализация обработчика заявок*/
     public OrderBook(){
-        bidMap = new HashMap<BigDecimal, List<AddOrder>>();
-        offerMap = new HashMap<BigDecimal, List<AddOrder>>();
-        bidMaxPriceList = new PriorityQueue<BigDecimal>(Collections.reverseOrder()); // top is maximum bid price
-        offerMinPriceList = new PriorityQueue<BigDecimal>();  // top is minimum offer price
+        bidMap = new HashMap<Double, List<AddOrder>>();
+        offerMap = new HashMap<Double, List<AddOrder>>();
+        bidMaxPriceList = new PriorityQueue<Double>(Collections.reverseOrder()); // top is maximum bid price
+        offerMinPriceList = new PriorityQueue<Double>();  // top is minimum offer price
     }
 
     /*обработка заявки в стакане*/
     public OrderBook addOrder(AddOrder order) {
+        Double price = order.getPrice();
+        int quantity = order.getVolume();
+
+        /*  Adds offer to map by hashing the price, then
+         *  adding offer to list located in that hash bucket
+         */
         if(order.getOperation().equals("SELL")){
-            //ищем в buy самую высокую цену, выше текущей и продаем текущее количество ордеров
-            //если продали всё, то ордер не добавляем. Существующую обновляем
-            //если продали не всё, то рекурсией смотрим на другие заявки
-            bidMap.put(order.getPrice(), order);
+            List<AddOrder> bucket = getBucket(offerMap, price);
+            AddOrder newOffer = new AddOrder(price, quantity);
+            bucket.add(newOffer);
+            offerMap.put(newOffer.getPrice(), bucket);
+            offerMinPriceList.add(price);
             matchOrders();
         }
+
+        /*  Adds bid to map by hashing the price, then
+         *  adding bid to list located in that hash bucket
+         */
         if(order.getOperation().equals("BUY")){
-            //аналогично, только смотрим самую дешевую заявку на продажу, меньше текущей
-            offerMap.put(order.getPrice(), order);
+            List<AddOrder> bucket = getBucket(bidMap, price);
+            AddOrder newBid = new AddOrder(price, quantity);
+            bucket.add(newBid);
+            bidMap.put(newBid.getPrice(), bucket);
+            bidMaxPriceList.add(price);
             matchOrders();
         }
         return this;
     }
 
-/*
-    public void addBid(double price, int quantity)
+    // Returns bucket list if price match, otherwise returns new list
+    public List<AddOrder> getBucket(Map<Double, List<AddOrder>> hashmap, Double price)
     {
-        List<Order> bucket = getBucket(bidMap, price);
-        Order newBid = new Order(price, quantity);
-        bucket.add(newBid);
-        bidMap.put(newBid.getPrice(), bucket);
-        bidMaxPriceList.add(price);
-        matchOrders();
+        List<AddOrder> bucket;
+        if(hashmap.containsKey(price))
+        {
+            bucket = hashmap.get(price);
+        }
+        else
+        {
+            bucket = new LinkedList<AddOrder>();
+        }
+        return bucket;
     }
-
-    */
-/*  Adds offer to map by hashing the price, then
-     *  adding offer to list located in that hash bucket
-     *//*
-
-    public void addOffer(double price, int quantity)
-    {
-        List<Order> bucket = getBucket(offerMap, price);
-        Order newOffer = new Order(price, quantity);
-        bucket.add(newOffer);
-        offerMap.put(newOffer.getPrice(), bucket);
-        offerMinPriceList.add(price);
-        matchOrders();
-    }
-*/
 
     public void matchOrders(){
-
-
-        /*
-        List<Order> bidBucket = null;
-        List<Order> offerBucket = null;
+        List<AddOrder> bidBucket = null;
+        List<AddOrder> offerBucket = null;
         Double lowestOffer = null;
         Double highestBid = null;
         boolean finished = false;
@@ -84,7 +83,7 @@ public class OrderBook {
             if(lowestOffer == null || highestBid == null || lowestOffer > highestBid)
             {
                 finished = true;
-            	logger.info("OrderBook matchOrders finished = true");
+                System.out.println("OrderBook matchOrders finished = true");
             }
             else
             {
@@ -93,18 +92,18 @@ public class OrderBook {
                 offerBucket = offerMap.get(offerMinPriceList.peek());
 
                 // Gets first element from each bucket since they're the oldest
-                int bidQuantity = bidBucket.get(0).getQuantity();
-                int offerQuantity = offerBucket.get(0).getQuantity();
+                int bidQuantity = bidBucket.get(0).getVolume();
+                int offerQuantity = offerBucket.get(0).getVolume();
 
                 if(bidQuantity > offerQuantity)
                 {
-                	logger.info("bidQuantity > offerQuantity");
+                    System.out.println("bidQuantity > offerQuantity");
                     System.out.println(successfulTrade(offerQuantity, lowestOffer));
 
                     // Decrements quantity in bid
                     bidQuantity -= offerQuantity;
-                    bidBucket.get(0).setQuantity(bidQuantity);
-                	logger.info("bidQuantity remaining qty : {}", bidQuantity);
+                    bidBucket.get(0).setVolume(bidQuantity);
+                    System.out.println("bidQuantity remaining qty : {" + bidQuantity + "}");
 
                     // Closes previous offer
                     offerBucket.remove(0);
@@ -112,13 +111,13 @@ public class OrderBook {
                 }
                 else if(offerQuantity > bidQuantity)
                 {
-                	logger.info("bidQuantity < offerQuantity");
+                    System.out.println("bidQuantity < offerQuantity");
                     System.out.println(successfulTrade(bidQuantity, lowestOffer));
 
                     // Decrements quantity in offer
                     offerQuantity -= bidQuantity;
-                    offerBucket.get(0).setQuantity(offerQuantity);
-                	logger.info("offerQuantity remaining qty : {}", offerQuantity);
+                    offerBucket.get(0).setVolume(offerQuantity);
+                    System.out.println("offerQuantity remaining qty : {" + offerQuantity + "}");
 
                     //  Closes previous bid
                     bidBucket.remove(0);
@@ -137,6 +136,13 @@ public class OrderBook {
                     offerMinPriceList.remove();
                 }
             }
-        }*/
+        }
+    }
+
+    // Returns the string printed for a successful trade.
+    public String successfulTrade(int quantity, double price) {
+        System.out.println("successfulTrade bidQuantity : {" + quantity + "}");
+        System.out.println("successfulTrade lowestOffer : {" + price + "}");
+        return quantity + " shares traded for $" + price + " per share.";
     }
 }
