@@ -11,28 +11,31 @@ import java.io.StringReader;
 import java.util.Scanner;
 
 public class Parse {
-    String fileName = "D:\\Design program\\GitHub\\test\\src\\main\\resources\\orders.xml";
+    String fileName = "C:\\Users\\Dmitry\\Desktop\\orders.xml";
     AddOrder addOrder;
     DeleteOrder deleteOrder;
     ParseToBooks parseToBooks = new ParseToBooks();
 
+    /*направляю на исполнение заявку, в зависимости от типа*/
     public Parse() throws FileNotFoundException {
         Scanner scanner = new Scanner(new File(fileName));
         scanner.useDelimiter("\n");
         while (scanner.hasNext()) {
             String row = scanner.next();
             if (row.contains("AddOrder")) {
-                addOrder(row);
+                addOrder = new AddOrder();
+                addOrder = addOrder(row);
                 parseToBooks.setAddOrder(addOrder);
             }
             if (row.contains("DeleteOrder")) {
-                deleteOrder(row);
+                deleteOrder = new DeleteOrder();
+                deleteOrder = deleteOrder(row);
                 parseToBooks.setDeleteOrder(deleteOrder);
             }
         }
     }
-
-    public void addOrder(String a) {
+    /*оборачиваю заявки xml в объекты*/
+    public AddOrder addOrder(String a) {
         JAXBContext jaxbContext;
         try {
             jaxbContext = JAXBContext.newInstance(AddOrder.class);
@@ -41,9 +44,10 @@ public class Parse {
         } catch (JAXBException e) {
             e.printStackTrace();
         }
+        return addOrder;
     }
 
-    public void deleteOrder(String a) {
+    public DeleteOrder deleteOrder(String a) {
         JAXBContext jaxbContext;
         try {
             jaxbContext = JAXBContext.newInstance(DeleteOrder.class);
@@ -52,5 +56,6 @@ public class Parse {
         } catch (JAXBException e) {
             e.printStackTrace();
         }
+        return deleteOrder;
     }
 }
