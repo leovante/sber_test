@@ -14,4 +14,12 @@ public class DeleteOrder {
 
     @XmlAttribute
     Integer orderId;
+
+    public String getBook() {
+        return book;
+    }
+
+    public Integer getOrderId() {
+        return orderId;
+    }
 }

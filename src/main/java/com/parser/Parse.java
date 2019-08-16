@@ -1,6 +1,8 @@
 package com.parser;
 
+import com.market.OrderBook;
 import com.market.ParseToBooks;
+import com.print.Printer;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -8,6 +10,7 @@ import javax.xml.bind.Unmarshaller;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.StringReader;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Parse {
@@ -34,6 +37,7 @@ public class Parse {
             }
         }
     }
+
     /*оборачиваю заявки xml в объекты*/
     public AddOrder addOrder(String a) {
         JAXBContext jaxbContext;
@@ -57,5 +61,9 @@ public class Parse {
             e.printStackTrace();
         }
         return deleteOrder;
+    }
+
+    public Map<String, OrderBook> getBooks(){
+        return parseToBooks.getOrderBook();
     }
 }

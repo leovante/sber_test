@@ -1,6 +1,7 @@
 package com.market;
 
 import com.parser.AddOrder;
+import com.parser.DeleteOrder;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -20,17 +21,43 @@ public class OrderBook {
         offerMinPriceList = new PriorityQueue<Double>();  // top is minimum offer price
     }
 
+    /*удаление заявки из стакана*/
+    public OrderBook deleteOrder(DeleteOrder deleteOrderId){
+        for (List<AddOrder> orderList : bidMap.values()){
+            for (int i = 0; i < orderList.size(); i++) {
+                if(orderList.get(i).getOrderId() == deleteOrderId.getOrderId()){
+                    Double price = orderList.get(i).getPrice();
+                    orderList.remove(i);
+                    new DeleteZeroBucket(price,bidMap,bidMaxPriceList);
+                    return this;
+                }
+            }
+        }
+        for (List<AddOrder> orderList : offerMap.values()){
+            for (int i = 0; i < orderList.size(); i++) {
+                if(orderList.get(i).getOrderId() == deleteOrderId.getOrderId()){
+                    Double price = orderList.get(i).getPrice();
+                    orderList.remove(i);
+                    new DeleteZeroBucket(price,offerMap,offerMinPriceList);
+                    return this;
+                }
+            }
+        }
+            return this;
+    }
+
     /*обработка заявки в стакане*/
     public OrderBook addOrder(AddOrder order) {
         Double price = order.getPrice();
-        int quantity = order.getVolume();
+        Integer quantity = order.getVolume();
+        Integer orderId = order.getOrderId();
 
         /*  Adds offer to map by hashing the price, then
          *  adding offer to list located in that hash bucket
          */
         if(order.getOperation().equals("SELL")){
             List<AddOrder> bucket = getBucket(offerMap, price);
-            AddOrder newOffer = new AddOrder(price, quantity);
+            AddOrder newOffer = new AddOrder(price, quantity, orderId);
             bucket.add(newOffer);
             offerMap.put(newOffer.getPrice(), bucket);
             offerMinPriceList.add(price);
@@ -42,7 +69,7 @@ public class OrderBook {
          */
         if(order.getOperation().equals("BUY")){
             List<AddOrder> bucket = getBucket(bidMap, price);
-            AddOrder newBid = new AddOrder(price, quantity);
+            AddOrder newBid = new AddOrder(price, quantity, orderId);
             bucket.add(newBid);
             bidMap.put(newBid.getPrice(), bucket);
             bidMaxPriceList.add(price);
@@ -106,8 +133,10 @@ public class OrderBook {
                     System.out.println("bidQuantity remaining qty : {" + bidQuantity + "}");
 
                     // Closes previous offer
+                    Double price = offerMinPriceList.peek();
                     offerBucket.remove(0);
                     offerMinPriceList.remove();
+                    new DeleteZeroBucket(price,offerMap);
                 }
                 else if(offerQuantity > bidQuantity)
                 {
@@ -120,8 +149,10 @@ public class OrderBook {
                     System.out.println("offerQuantity remaining qty : {" + offerQuantity + "}");
 
                     //  Closes previous bid
+                    Double price = bidMaxPriceList.peek();
                     bidBucket.remove(0);
                     bidMaxPriceList.remove();
+                    new DeleteZeroBucket(price,bidMap);
                 }
                 else
                 {
@@ -144,5 +175,13 @@ public class OrderBook {
         System.out.println("successfulTrade bidQuantity : {" + quantity + "}");
         System.out.println("successfulTrade lowestOffer : {" + price + "}");
         return quantity + " shares traded for $" + price + " per share.";
+    }
+
+    public Map<Double, List<AddOrder>> getBidMap() {
+        return bidMap;
+    }
+
+    public Map<Double, List<AddOrder>> getOfferMap() {
+        return offerMap;
     }
 }

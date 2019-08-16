@@ -29,10 +29,10 @@ public class AddOrder{
     public AddOrder() {
     }
 
-    public AddOrder(Double price, int quantity)
-    {
+    public AddOrder(Double price, int quantity, Integer orderId){
         this.price = price;
         this.volume = quantity;
+        this.orderId = orderId;
     }
 
     public String getBook() {
