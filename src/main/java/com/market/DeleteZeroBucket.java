@@ -20,4 +20,8 @@ public class DeleteZeroBucket {
             map.remove(price);
         }
     }
+
+    DeleteZeroBucket(Queue<Double> offerMinPriceList) {
+        offerMinPriceList.remove();
+    }
 }
